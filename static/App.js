@@ -10,16 +10,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var contentNode = document.getElementById('contents');
 
-var issues = [{
-    id: 1, status: 'Open', owner: 'Ravan',
-    created: new Date('2016-08-15'), effort: 5, completionDate: undefined,
-    title: 'Error in console when clicking Add'
-}, {
-    id: 2, status: 'Assigned', owner: 'Eddie',
-    created: new Date('2016-06-116'), effort: 14, completionDate: new Date('2016-08-30'),
-    title: 'Missing bottom border on panel'
-}];
-
 var IssueFilter = function (_React$Component) {
     _inherits(IssueFilter, _React$Component);
 
@@ -93,48 +83,50 @@ var IssueAdd = function (_React$Component2) {
     return IssueAdd;
 }(React.Component);
 
-var IssueRow = props(React.createElement(
-    'tr',
-    null,
-    React.createElement(
-        'td',
+var IssueRow = function IssueRow(props) {
+    return React.createElement(
+        'tr',
         null,
-        issue.id
-    ),
-    React.createElement(
-        'td',
-        null,
-        issue.status
-    ),
-    React.createElement(
-        'td',
-        null,
-        issue.owner
-    ),
-    React.createElement(
-        'td',
-        null,
-        issue.created.toDateString()
-    ),
-    React.createElement(
-        'td',
-        null,
-        issue.effort
-    ),
-    React.createElement(
-        'td',
-        null,
-        issue.completionDate ? issue.completionDate.toDateString() : ''
-    ),
-    React.createElement(
-        'td',
-        null,
-        issue.title
-    )
-));
+        React.createElement(
+            'td',
+            null,
+            props.issue.id
+        ),
+        React.createElement(
+            'td',
+            null,
+            props.issue.status
+        ),
+        React.createElement(
+            'td',
+            null,
+            props.issue.owner
+        ),
+        React.createElement(
+            'td',
+            null,
+            props.issue.created.toDateString()
+        ),
+        React.createElement(
+            'td',
+            null,
+            props.issue.effort
+        ),
+        React.createElement(
+            'td',
+            null,
+            props.issue.completionDate ? props.issue.completionDate.toDateString() : ''
+        ),
+        React.createElement(
+            'td',
+            null,
+            props.issue.title
+        )
+    );
+};
 
 function IssueTable(props) {
-    var issueRows = this.props.issues.map(function (issue) {
+    var issueRows = props.issues.map(function (issue) {
         return React.createElement(IssueRow, { key: issue.id, issue: issue });
     });
     return React.createElement(
@@ -214,17 +206,44 @@ var IssueList = function (_React$Component3) {
         value: function loadData() {
             var _this4 = this;
 
-            setTimeout(function () {
-                _this4.setState({ issues: issues });
-            }, 500);
+            fetch('/api/issues').then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                console.log("Total count of records:", data._metadata.total_count);
+                data.records.forEach(function (issue) {
+                    issue.created = new Date(issue.created);
+                    if (issue.completionDate) issue.completionDate = new Date(issue.completionDate);
+                });
+                _this4.setState({ issues: data.records });
+            }).catch(function (err) {
+                console.log(err);
+            });
         }
     }, {
         key: 'createIssue',
         value: function createIssue(newIssue) {
-            var newIssues = this.state.issues.slice();
-            newIssue.id = this.state.issues.length + 1;
-            newIssues.push(newIssue);
-            this.setState({ issues: newIssues });
+            var _this5 = this;
+
+            fetch('api/issues', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newIssue)
+            }).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (updatedIssue) {
+                        updatedIssue.created = new Date(updatedIssue.created);
+                        if (updatedIssue.completionDate) updatedIssue.completionDate = new Date(updatedIssue.completionDate);
+                        var newIssues = _this5.state.issues.concat(updatedIssue);
+                        _this5.setState({ issues: newIssues });
+                    });
+                } else {
+                    response.json().then(function (error) {
+                        alert("Failed to add issue: " + error.message);
+                    });
+                }
+            }).catch(function (err) {
+                alert("Error in sending data to server" + err.message);
+            });
         }
     }, {
         key: 'render',
