@@ -1,12 +1,29 @@
-'use strict'
+import express from 'express';
+import bodyParser from 'body-parser';
+import {MongoClient} from 'mongodb';
+import Issue from './issue.js';
+import 'babel-polyfill';
+import SourceMapSupport from 'source-map-support';
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const MongoClient = require('mongodb').MongoClient;
+SourceMapSupport.install();
 
 const app = express();
 app.use(express.static('static'));
 app.use(bodyParser.json());
+
+if (process.env.NODE_ENV !== 'production') {
+  const webpack = require('webpack');
+  const webpackDevMiddleware = require('webpack-dev-middleware');
+  const webpackHotMiddleware = require('webpack-hot-middleware');
+
+  const config = require('../webpack.config');
+  config.entry.app.push('webpack-hot-middleware/client', 'webpack/hot/only-dev-server');
+  config.plugins.push(new webpack.HotModuleReplacementPlugin());
+
+  const bundler = webpack(config);
+  app.use(webpackDevMiddleware(bundler, { noInfo: true }));
+  app.use(webpackHotMiddleware(bundler, { log: console.log }));
+}
 
 app.get('/api/issues', (req, res) => {
   db.collection('issues').find().toArray().then(issues => {
@@ -18,39 +35,7 @@ app.get('/api/issues', (req, res) => {
   });
 });
 
-const validIssueStatus = {
-  New: true,
-  Open: true,
-  Assigned: true,
-  Fixed: true,
-  Verified: true,
-  Closed: true,
-};
 
-const issueFieldType = {
-  status: 'required',
-  owner: 'required',
-  effort: 'optional',
-  created: 'required',
-  completionDate: 'optional',
-  title: 'required',
-};
-
-function validateIssue(issue) {
-  for (const field in issueFieldType) {
-    const type = issueFieldType[field];
-    if (!type) {
-      delete issue[field];
-    } else if (type === 'required' && !issue[field]) {
-      return `${field} is required.`;
-    }
-  }
-
-  if (!validIssueStatus[issue.status])
-    return `${issue.status} is not a valid status.`;
-
-  return null;
-}
 
 app.post('/api/issues', (req, res) => {
   const newIssue = req.body;
@@ -58,7 +43,7 @@ app.post('/api/issues', (req, res) => {
   if (!newIssue.status)
     newIssue.status = 'New';
 
-  const err = validateIssue(newIssue)
+  const err = Issue.validateIssue(newIssue)
   if (err) {
     res.status(422).json({ message: `Invalid request: ${err}` });
     return;
