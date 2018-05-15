@@ -28,19 +28,7 @@ const app = (0, _express2.default)();
 app.use(_express2.default.static('static'));
 app.use(_bodyParser2.default.json());
 
-if (process.env.NODE_ENV !== 'production') {
-  const webpack = require('webpack');
-  const webpackDevMiddleware = require('webpack-dev-middleware');
-  const webpackHotMiddleware = require('webpack-hot-middleware');
-
-  const config = require('../webpack.config');
-  config.entry.app.push('webpack-hot-middleware/client', 'webpack/hot/only-dev-server');
-  config.plugins.push(new webpack.HotModuleReplacementPlugin());
-
-  const bundler = webpack(config);
-  app.use(webpackDevMiddleware(bundler, { noInfo: true }));
-  app.use(webpackHotMiddleware(bundler, { log: console.log }));
-}
+let db;
 
 app.get('/api/issues', (req, res) => {
   db.collection('issues').find().toArray().then(issues => {
@@ -55,23 +43,23 @@ app.get('/api/issues', (req, res) => {
 app.post('/api/issues', (req, res) => {
   const newIssue = req.body;
   newIssue.created = new Date();
-  if (!newIssue.status) newIssue.status = 'New';
-
+  if (!newIssue.status) {
+    newIssue.status = 'New';
+  }
   const err = _issue2.default.validateIssue(newIssue);
   if (err) {
     res.status(422).json({ message: `Invalid request: ${err}` });
     return;
   }
 
-  db.collection('issues').insertOne(newIssue).then(result => db.collection('issues').find({ _id: result.insertedId }).limit(1).next()).then(newIssue => {
-    res.json(newIssue);
+  db.collection('issues').insertOne(newIssue).then(result => db.collection('issues').find({ _id: result.insertedId }).limit(1).next()).then(savedIssue => {
+    res.json(savedIssue);
   }).catch(error => {
     console.log(error);
     res.status(500).json({ message: `Internal Server Error: ${error}` });
   });
 });
 
-let db;
 _mongodb.MongoClient.connect('mongodb://localhost/issuetracker').then(connection => {
   db = connection;
   app.listen(3000, () => {
