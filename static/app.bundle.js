@@ -13,23 +13,83 @@ webpackJsonp([0],{
 	
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 	
-	var _IssueList = __webpack_require__(172);
+	var _reactRouter = __webpack_require__(172);
+	
+	var _IssueList = __webpack_require__(235);
 	
 	var _IssueList2 = _interopRequireDefault(_IssueList);
+	
+	var _IssueEdit = __webpack_require__(239);
+	
+	var _IssueEdit2 = _interopRequireDefault(_IssueEdit);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var contentNode = document.getElementById('contents');
+	var NoMatch = function NoMatch() {
+	  return _react2.default.createElement(
+	    'p',
+	    null,
+	    'Page Not Found'
+	  );
+	};
 	
-	_reactDom2.default.render(_react2.default.createElement(_IssueList2.default, null), contentNode); // Render the component inside the content Node
+	var App = function App(props) {
+	  return _react2.default.createElement(
+	    'div',
+	    null,
+	    _react2.default.createElement(
+	      'div',
+	      { className: 'header' },
+	      _react2.default.createElement(
+	        'h1',
+	        null,
+	        'Issue Tracker'
+	      )
+	    ),
+	    _react2.default.createElement(
+	      'div',
+	      { className: 'contents' },
+	      props.children
+	    ),
+	    _react2.default.createElement(
+	      'div',
+	      { className: 'footer' },
+	      'Full source code available at this ',
+	      _react2.default.createElement(
+	        'a',
+	        { href: 'https://github.com/StephanieZ/MERN_CRUD' },
+	        'GitHub repository'
+	      ),
+	      '.'
+	    )
+	  );
+	};
+	
+	App.propTypes = {
+	  children: _react2.default.PropTypes.object.isRequired
+	};
+	var RoutedApp = function RoutedApp() {
+	  return _react2.default.createElement(
+	    _reactRouter.Router,
+	    { history: _reactRouter.browserHistory },
+	    _react2.default.createElement(_reactRouter.Redirect, { from: '/', to: '/issues' }),
+	    _react2.default.createElement(_reactRouter.Route, { path: '/', component: App }),
+	    _react2.default.createElement(_reactRouter.Route, { path: '/issues', component: (0, _reactRouter.withRouter)(_IssueList2.default) }),
+	    _react2.default.createElement(_reactRouter.Route, { path: '/issues/:id', component: _IssueEdit2.default }),
+	    _react2.default.createElement(_reactRouter.Route, { path: '*', component: NoMatch })
+	  );
+	};
+	
+	_reactDom2.default.render(_react2.default.createElement(RoutedApp, null), contentNode); // Render the component inside the content Node
 	
 	if (false) {
-	    module.hot.accept();
+	  module.hot.accept();
 	}
 
 /***/ },
 
-/***/ 172:
+/***/ 235:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -44,13 +104,15 @@ webpackJsonp([0],{
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	__webpack_require__(173);
+	__webpack_require__(236);
 	
-	var _IssueAdd = __webpack_require__(174);
+	var _reactRouter = __webpack_require__(172);
+	
+	var _IssueAdd = __webpack_require__(237);
 	
 	var _IssueAdd2 = _interopRequireDefault(_IssueAdd);
 	
-	var _IssueFilter = __webpack_require__(175);
+	var _IssueFilter = __webpack_require__(238);
 	
 	var _IssueFilter2 = _interopRequireDefault(_IssueFilter);
 	
@@ -69,7 +131,11 @@ webpackJsonp([0],{
 	    _react2.default.createElement(
 	      'td',
 	      null,
-	      props.issue._id
+	      _react2.default.createElement(
+	        _reactRouter.Link,
+	        { to: '/issues/' + props.issue._id },
+	        props.issue._id.substr(-4)
+	      )
 	    ),
 	    _react2.default.createElement(
 	      'td',
@@ -179,7 +245,7 @@ webpackJsonp([0],{
 	    var _this = _possibleConstructorReturn(this, (IssueList.__proto__ || Object.getPrototypeOf(IssueList)).call(this));
 	
 	    _this.state = { issues: [] };
-	
+	    _this.setFilter = _this.setFilter.bind(_this);
 	    _this.createIssue = _this.createIssue.bind(_this);
 	    return _this;
 	  }
@@ -190,11 +256,26 @@ webpackJsonp([0],{
 	      this.loadData();
 	    }
 	  }, {
+	    key: 'componentDidUpdate',
+	    value: function componentDidUpdate(prevProps) {
+	      var oldQuery = prevProps.location.query;
+	      var newQuery = this.props.location.query;
+	      if (oldQuery.status === newQuery.status) {
+	        return;
+	      }
+	      this.loadData();
+	    }
+	  }, {
+	    key: 'setFilter',
+	    value: function setFilter(query) {
+	      this.props.router.push({ pathname: this.props.location.pathname, query: query });
+	    }
+	  }, {
 	    key: 'loadData',
 	    value: function loadData() {
 	      var _this2 = this;
 	
-	      fetch('/api/issues').then(function (response) {
+	      fetch('/api/issues' + this.props.location.search).then(function (response) {
 	        if (response.ok) {
 	          response.json().then(function (data) {
 	            data.records.forEach(function (issue) {
@@ -248,12 +329,7 @@ webpackJsonp([0],{
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        _react2.default.createElement(
-	          'h1',
-	          null,
-	          'Issue Tracker'
-	        ),
-	        _react2.default.createElement(_IssueFilter2.default, null),
+	        _react2.default.createElement(_IssueFilter2.default, { setFilter: this.setFilter }),
 	        _react2.default.createElement('hr', null),
 	        _react2.default.createElement(IssueTable, { issues: this.state.issues }),
 	        _react2.default.createElement('hr', null),
@@ -266,10 +342,16 @@ webpackJsonp([0],{
 	}(_react2.default.Component);
 	
 	exports.default = IssueList;
+	
+	
+	IssueList.propTypes = {
+	  location: _react2.default.PropTypes.object.isRequired,
+	  router: _react2.default.PropTypes.object
+	};
 
 /***/ },
 
-/***/ 174:
+/***/ 237:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -351,7 +433,7 @@ webpackJsonp([0],{
 
 /***/ },
 
-/***/ 175:
+/***/ 238:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -380,17 +462,62 @@ webpackJsonp([0],{
 	  function IssueFilter() {
 	    _classCallCheck(this, IssueFilter);
 	
-	    return _possibleConstructorReturn(this, (IssueFilter.__proto__ || Object.getPrototypeOf(IssueFilter)).apply(this, arguments));
+	    var _this = _possibleConstructorReturn(this, (IssueFilter.__proto__ || Object.getPrototypeOf(IssueFilter)).call(this));
+	
+	    _this.clearFilter = _this.clearFilter.bind(_this);
+	    _this.setFilterOpen = _this.setFilterOpen.bind(_this);
+	    _this.setFilterAssigned = _this.setFilterAssigned.bind(_this);
+	    return _this;
 	  }
 	
 	  _createClass(IssueFilter, [{
+	    key: 'setFilterOpen',
+	    value: function setFilterOpen(e) {
+	      e.preventDefault();
+	      this.props.setFilter({ status: 'Open' });
+	    }
+	  }, {
+	    key: 'setFilterAssigned',
+	    value: function setFilterAssigned(e) {
+	      e.preventDefault();
+	      this.props.setFilter({ status: 'Assigned' });
+	    }
+	  }, {
+	    key: 'clearFilter',
+	    value: function clearFilter(e) {
+	      e.preventDefault();
+	      this.props.setFilter({});
+	    }
+	  }, {
 	    key: 'render',
-	    // eslint-disable-line
 	    value: function render() {
+	      var Separator = function Separator() {
+	        return _react2.default.createElement(
+	          'span',
+	          null,
+	          ' | '
+	        );
+	      };
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        'This is a placeholder for the Issue Filter.'
+	        _react2.default.createElement(
+	          'a',
+	          { href: '#', onClick: this.clearFilter },
+	          'All Issues'
+	        ),
+	        _react2.default.createElement(Separator, null),
+	        _react2.default.createElement(
+	          'a',
+	          { href: '#', onClick: this.setFilterOpen },
+	          'Open Issues'
+	        ),
+	        _react2.default.createElement(Separator, null),
+	        _react2.default.createElement(
+	          'a',
+	          { href: '#', onClick: this.setFilterAssigned },
+	          'Assigned Issues'
+	        )
 	      );
 	    }
 	  }]);
@@ -399,6 +526,80 @@ webpackJsonp([0],{
 	}(_react2.default.Component);
 	
 	exports.default = IssueFilter;
+	
+	
+	IssueFilter.propTypes = {
+	  setFilter: _react2.default.PropTypes.func.isRequired
+	};
+
+/***/ },
+
+/***/ 239:
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(1);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactRouter = __webpack_require__(172);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var IssueEdit = function (_React$Component) {
+	  _inherits(IssueEdit, _React$Component);
+	
+	  function IssueEdit() {
+	    _classCallCheck(this, IssueEdit);
+	
+	    return _possibleConstructorReturn(this, (IssueEdit.__proto__ || Object.getPrototypeOf(IssueEdit)).apply(this, arguments));
+	  }
+	
+	  _createClass(IssueEdit, [{
+	    key: 'render',
+	    //eslint-disable-line
+	    value: function render() {
+	      return _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'p',
+	          null,
+	          'This is a placeholder for editing issue ',
+	          this.props.params.id,
+	          '.'
+	        ),
+	        _react2.default.createElement(
+	          _reactRouter.Link,
+	          { to: '/issues' },
+	          'Back to issue list'
+	        )
+	      );
+	    }
+	  }]);
+	
+	  return IssueEdit;
+	}(_react2.default.Component);
+	
+	exports.default = IssueEdit;
+	
+	
+	IssueEdit.propTypes = {
+	  params: _react2.default.PropTypes.object.isRequired
+	};
 
 /***/ }
 

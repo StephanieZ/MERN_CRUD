@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
 import Issue from './issue.js';
 import 'babel-polyfill';
+import path from 'path';
 import SourceMapSupport from 'source-map-support';
 
 SourceMapSupport.install();
@@ -14,7 +15,10 @@ app.use(bodyParser.json());
 let db;
 
 app.get('/api/issues', (req, res) => {
-  db.collection('issues').find().toArray().
+  const filter = {};
+  if (req.query.status) filter.status = req.query.status;
+
+  db.collection('issues').find(filter).toArray().
   then(issues => {
     const metadata = { total_count: issues.length };
     res.json({ _metadata: metadata, records: issues });
@@ -49,6 +53,10 @@ app.post('/api/issues', (req, res) => {
     console.log(error);
     res.status(500).json({ message: `Internal Server Error: ${error}` });
   });
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve('static/index.html'));
 });
 
 MongoClient.connect('mongodb://localhost/issuetracker').then(connection => {

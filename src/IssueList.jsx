@@ -1,12 +1,13 @@
 import React from 'react';
 import 'whatwg-fetch';
+import { Link } from 'react-router';
 
 import IssueAdd from './IssueAdd.jsx';
 import IssueFilter from './IssueFilter.jsx';
 
 const IssueRow = (props) => (
   <tr>
-    <td>{props.issue._id}</td>
+    <td><Link to={`/issues/${props.issue._id}`}>{props.issue._id.substr(-4)}</Link></td>
     <td>{props.issue.status}</td>
     <td>{props.issue.owner}</td>
     <td>{props.issue.created.toDateString()}</td>
@@ -48,7 +49,7 @@ export default class IssueList extends React.Component {
   constructor() {
     super();
     this.state = { issues: [] };
-
+    this.setFilter = this.setFilter.bind(this);
     this.createIssue = this.createIssue.bind(this);
   }
 
@@ -56,8 +57,21 @@ export default class IssueList extends React.Component {
     this.loadData();
   }
 
+  componentDidUpdate(prevProps) {
+    const oldQuery = prevProps.location.query;
+    const newQuery = this.props.location.query;
+    if (oldQuery.status === newQuery.status) {
+      return;
+    }
+    this.loadData();
+  }
+  
+  setFilter(query) {
+    this.props.router.push({ pathname: this.props.location.pathname, query });
+  }
+
   loadData() {
-    fetch('/api/issues').then(response => {
+    fetch(`/api/issues${this.props.location.search}`).then(response => {
       if (response.ok) {
         response.json().then(data => {
           data.records.forEach(issue => {
@@ -106,8 +120,7 @@ export default class IssueList extends React.Component {
   render() {
     return (
       <div>
-        <h1>Issue Tracker</h1>
-        <IssueFilter />
+        <IssueFilter setFilter={this.setFilter} />
         <hr />
         <IssueTable issues={this.state.issues} />
         <hr />
@@ -116,3 +129,9 @@ export default class IssueList extends React.Component {
     );
   }
 }
+
+IssueList.propTypes = {
+  location: React.PropTypes.object.isRequired,
+  router: React.PropTypes.object,
+};
+
