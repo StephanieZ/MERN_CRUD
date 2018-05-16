@@ -59,7 +59,7 @@ webpackJsonp([0],{
 	      _react2.default.createElement(
 	        'a',
 	        { href: 'https://github.com/StephanieZ/MERN_CRUD' },
-	        'GitHub repository'
+	        ' GitHub repository'
 	      ),
 	      '.'
 	    )
@@ -69,15 +69,19 @@ webpackJsonp([0],{
 	App.propTypes = {
 	  children: _react2.default.PropTypes.object.isRequired
 	};
+	
 	var RoutedApp = function RoutedApp() {
 	  return _react2.default.createElement(
 	    _reactRouter.Router,
 	    { history: _reactRouter.browserHistory },
 	    _react2.default.createElement(_reactRouter.Redirect, { from: '/', to: '/issues' }),
-	    _react2.default.createElement(_reactRouter.Route, { path: '/', component: App }),
-	    _react2.default.createElement(_reactRouter.Route, { path: '/issues', component: (0, _reactRouter.withRouter)(_IssueList2.default) }),
-	    _react2.default.createElement(_reactRouter.Route, { path: '/issues/:id', component: _IssueEdit2.default }),
-	    _react2.default.createElement(_reactRouter.Route, { path: '*', component: NoMatch })
+	    _react2.default.createElement(
+	      _reactRouter.Route,
+	      { path: '/', component: App },
+	      _react2.default.createElement(_reactRouter.Route, { path: '/issues', component: (0, _reactRouter.withRouter)(_IssueList2.default) }),
+	      _react2.default.createElement(_reactRouter.Route, { path: '/issues/:id', component: _IssueEdit2.default }),
+	      _react2.default.createElement(_reactRouter.Route, { path: '*', component: NoMatch })
+	    )
 	  );
 	};
 	
